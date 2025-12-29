@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For You</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8e7cc3; 
+            --secondary: #674ea7; 
+            --accent: #d9d2e9;
+            --bg: #f3f0ff; 
+            --card-bg: #ffffff;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: radial-gradient(var(--accent) 2px, transparent 2px);
+            background-size: 40px 40px;
+            margin: 0;
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+            /* FIXED: Changed overflow to allow scrolling and removed touch-action: manipulation */
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* --- INTRO SCREEN STYLES --- */
+        #intro-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5000;
+            text-align: center;
+        }
+
+        .intro-card {
+            background: white;
+            padding: 40px;
+            border: 4px solid var(--secondary);
+            box-shadow: 10px 10px 0px var(--secondary);
+            max-width: 85%;
+        }
+
+        /* --- NEW YEAR BOOM/SPARKLE STYLES --- */
+        .confetti {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary);
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .sparkle {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            z-index: -1;
+            animation: twinkle 1.5s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* --- MINIGAME STYLES --- */
+        #game-container {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg);
+            display: none; /* Hidden until intro is clicked */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #game-canvas {
+            border: 4px solid var(--secondary);
+            background: white;
+            box-shadow: 8px 8px 0px var(--secondary);
+            cursor: none;
+            max-width: 90vw;
+            max-height: 60vh;
+        }
+
+        .game-ui {
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--secondary);
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+        /* --- DECORATIONS --- */
+        .heart {
+            position: fixed;
+            color: var(--primary);
+            font-size: 20px;
+            user-select: none;
+            pointer-events: none;
+            z-index: -1;
+            animation: float 6s linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* --- ENVELOPE --- */
+        #envelope-wrapper {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .pixel-envelope {
+            width: 150px;
+            image-rendering: pixelated;
+            filter: drop-shadow(8px 8px 0px var(--secondary));
+            transition: 0.3s;
+        }
+
+        /* --- MAIN CONTENT --- */
+        #main-content {
+            display: none;
+            width: 100%;
+            max-width: 700px;
+            padding: 40px 20px;
+            box-sizing: border-box;
+            animation: slideUp 0.8s ease;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: white;
+            border: 4px solid var(--secondary);
+            padding: 12px;
+            font-family: 'Press Start 2P';
+            font-size: 10px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px var(--secondary);
+            transition: 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 40px 30px;
+            border: 4px solid var(--secondary);
+            box-shadow: 10px 10px 0px var(--secondary);
+            line-height: 2;
+            font-size: 11px;
+            position: relative;
+        }
+
+        .stamp {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 60px;
+            border: 3px dashed var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 20px;
+            transform: rotate(10deg);
+        }
+
+        .glow-text {
+            font-size: 14px;
+            color: var(--secondary);
+            margin-bottom: 25px;
+            border-bottom: 4px solid var(--accent);
+            display: inline-block;
+        }
+
+        /* --- MUSIC SECTION STYLES --- */
+        .record-player {
+            width: 120px;
+            height: 120px;
+            background: #333;
+            border-radius: 50%;
+            margin: 20px auto;
+            border: 8px solid var(--primary);
+            position: relative;
+            animation: spin 4s linear infinite;
+        }
+        .record-player::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px; height: 30px;
+            background: var(--accent);
+            border-radius: 50%;
+        }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* --- GALLERY --- */
+        .gallery-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: white;
+            padding: 15px;
+            border: 4px solid var(--secondary);
+            box-shadow: 6px 6px 0px var(--secondary);
+            margin-bottom: 30px;
+        }
+
+        .gallery-row:nth-child(even) { flex-direction: row-reverse; text-align: right; }
+
+        .gallery-img-wrapper img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border: 4px solid var(--primary);
+        }
+
+        .gallery-text { flex: 1; font-size: 9px; line-height: 1.8; color: var(--secondary); }
+
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .instruction { font-size: 10px; color: var(--secondary); margin-top: 20px; animation: blink 1.2s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        .content-section { display: none; }
+        .active-section { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="intro-screen">
+        <div class="intro-card">
+            <h1 style="font-size: 16px; color: var(--secondary);">Hi Love! ♥</h1>
+            <p style="font-size: 10px; line-height: 2;">I made something special for you to celebrate the New Year.</p>
+            <p style="font-size: 10px; margin-bottom: 25px;">Are you ready to see it?</p>
+            <button class="tab-btn" onclick="initiateEverything()">YES, OPEN IT! ✨</button>
+        </div>
+    </div>
+
+    <audio id="bg-music" loop>
+        <source src="PASTE_YOUR_MP3_URL_HERE" type="audio/mpeg">
+    </audio>
+
+    <div id="game-container">
+        <div class="game-ui">
+            <p>COLLECT 10 HEARTS TO UNLOCK YOUR SURPRISE!</p>
+            <p>SCORE: <span id="score">0</span>/10</p>
+        </div>
+        <canvas id="game-canvas"></canvas>
+        <div class="instruction">CATCH THEM!</div>
+    </div>
+
+    <div id="hearts-container"></div>
+
+    <div id="envelope-wrapper" onclick="startExperience()">
+        <img src="https://i.pinimg.com/originals/cd/69/ea/cd69eaac49bb66b0272aaa46504cb083.gif" class="pixel-envelope">
+        <div class="instruction">YOU DID IT! CLICK TO OPEN</div>
+    </div>
+
+    <div id="main-content">
+        <nav class="nav-tabs">
+            <button class="tab-btn active" onclick="showSection('letter-sec', this)">♥ LETTER</button>
+            <button class="tab-btn" onclick="showSection('music-sec', this)">🎵 OUR SONG</button>
+            <button class="tab-btn" onclick="showSection('gallery-sec', this)">✦ GALLERY</button>
+        </nav>
+
+        <div id="letter-sec" class="content-section active-section">
+            <div class="card">
+                <div class="stamp">♥</div>
+                <h2 class="glow-text">HAPPY NEW YEAR!!!</h2>
+                <p>egiluy udh mau 2026 nich yapping dulu kali yak</p>
+                <p>I just want to tell you how glad I am to have u as a part of my life. It’s crazy to think that three months ago we were still pdkt-ing, and now I can’t imagine starting 2026 without you (anjay). </p>
+                <p>Jujur masih gak nyangka bisa pacaran w someone as amazing as you, and for that I say thank you sayangg. The day when I was told you liked me back is quite literally the best day of my life. Thankyou for all the fun things we did, all the dates, calls, hugs, and kisses HEHEHEHE.</p>
+                <p>Please don't be insecure and compare urself to others. You're pretty, beautiful, gorgeous, kind, smart, hot, amazing and so on. you really deserve all the compliments in the world (AND UR NOT FAT BTW UR SEXY AS HELL).</p>
+                <p>I'm so sorry for the mistakes I made in the past, when I made u feel bad or uncomfortable, and thankyou for being honest about it.</p>
+                <p>and I'm sorry I couldn't give you much of a present other than this simple webpage I made. But I hope this little gesture shows how much I care about you and appreciate having you in my life. </p>
+                <p>I think that's all i gotta say blud i aint the yapper type hehe thankyou for reading all this muah I LOVE YOU BABYY</p>
+                <p style="text-align: right; margin-top: 30px; color: var(--primary);">— ur dearest bf —</p>
+                <p style="font-size: 10px; margin-top: 20px;">p.s. Don't forget to check out the gallery too hihi</p>
+            </div>
+        </div>
+
+        <div id="music-sec" class="content-section">
+            <div class="card" style="text-align: center;">
+                <h2 class="glow-text">THE SONG FOR US</h2>
+                <div class="record-player"></div>
+                <p><strong>[Song Title]</strong></p>
+                <p style="font-size: 10px; color: var(--secondary); margin-top: 20px; line-height: 1.6;">
+                    "I chose this song because every time it plays, I think of you. 
+                    The lyrics remind me of how lucky I am to have you. 
+                    It's like our own little soundtrack for 2026."
+                </p>
+            </div>
+        </div>
+
+        <div id="gallery-sec" class="content-section">
+            <div class="gallery-container">
+                <div class="gallery-row">
+                    <div class="gallery-img-wrapper">
+                        <img src="https://via.placeholder.com/150" alt="Us 1">
+                    </div>
+                    <div class="gallery-text">
+                        <p><strong>✦ THE START ✦</strong></p>
+                        <p>The first day we met. I didn't know then how much you'd change my life.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- NEW START LOGIC ---
+        function initiateEverything() {
+            // FIXED: Set body overflow to hidden only during the game to prevent jitter
+            document.body.style.overflow = 'hidden';
+            document.getElementById('intro-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'flex';
+            
+            // Start Music
+            const music = document.getElementById('bg-music');
+            music.play().catch(e => console.log("Music play blocked"));
+            
+            gameActive = true;
+            update(); // Start game loop
+        }
+
+        // --- NEW YEAR EFFECTS LOGIC ---
+        function firework(x, y) {
+            const colors = ['#8e7cc3', '#674ea7', '#d9d2e9', '#ffffff', '#ffeb3b'];
+            for (let i = 0; i < 40; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'confetti';
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = Math.random() * 8 + 4;
+                const dx = Math.cos(angle) * velocity;
+                const dy = Math.sin(angle) * velocity;
+                
+                document.body.appendChild(particle);
+                
+                let opacity = 1;
+                let curX = x;
+                let curY = y;
+                
+                const move = () => {
+                    curX += dx;
+                    curY += dy;
+                    opacity -= 0.02;
+                    particle.style.left = curX + 'px';
+                    particle.style.top = curY + 'px';
+                    particle.style.opacity = opacity;
+                    
+                    if (opacity > 0) requestAnimationFrame(move);
+                    else particle.remove();
+                };
+                requestAnimationFrame(move);
+            }
+        }
+
+        function createSparkles() {
+            setInterval(() => {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.style.left = Math.random() * 100 + 'vw';
+                sparkle.style.top = Math.random() * 100 + 'vh';
+                document.body.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 1500);
+            }, 200);
+        }
+
+        // --- GAME LOGIC ---
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        
+        canvas.width = 300;
+        canvas.height = 400;
+
+        let score = 0;
+        let basket = { x: 130, y: 350, w: 50, h: 15 };
+        let hearts = [];
+        let gameActive = false; // Start as false until Intro is clicked
+
+        function handleMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            basket.x = (clientX - rect.left) * (canvas.width / rect.width) - basket.w/2;
+            if (basket.x < 0) basket.x = 0;
+            if (basket.x > canvas.width - basket.w) basket.x = canvas.width - basket.w;
+        }
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('touchmove', (e) => { handleMove(e); e.preventDefault(); }, { passive: false });
+
+        function createFallingHeart() {
+            if(!gameActive) return;
+            hearts.push({ x: Math.random() * (canvas.width-20) + 10, y: -20 });
+        }
+        setInterval(createFallingHeart, 800);
+
+        function update() {
+            if(!gameActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#674ea7';
+            ctx.fillRect(basket.x, basket.y, basket.w, basket.h);
+            ctx.fillStyle = '#8e7cc3';
+            ctx.font = '20px serif';
+            for(let i = hearts.length - 1; i >= 0; i--) {
+                hearts[i].y += 3.5;
+                ctx.fillText('♥', hearts[i].x, hearts[i].y);
+                if(hearts[i].y > basket.y && hearts[i].y < basket.y + basket.h &&
+                   hearts[i].x > basket.x - 10 && hearts[i].x < basket.x + basket.w + 10) {
+                    hearts.splice(i, 1);
+                    score++;
+                    scoreElement.innerText = score;
+                    if(score >= 10) endGame();
+                } else if(hearts[i].y > canvas.height) {
+                    hearts.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        function endGame() {
+            gameActive = false;
+            document.getElementById('game-container').style.display = 'none';
+            document.getElementById('envelope-wrapper').style.display = 'flex';
+            // FIXED: Allow scrolling again once the game is over
+            document.body.style.overflow = 'auto';
+            document.body.style.overflowX = 'hidden';
+        }
+
+        // --- NAVIGATION & START ---
+        function createHeart() {
+            const container = document.getElementById('hearts-container');
+            const heart = document.createElement('div');
+            heart.innerHTML = '♥';
+            heart.classList.add('heart');
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 3 + 3) + 's';
+            container.appendChild(heart);
+            setTimeout(() => heart.remove(), 6000);
+        }
+
+        function startExperience() {
+            firework(window.innerWidth / 2, window.innerHeight / 2);
+            document.getElementById('envelope-wrapper').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            
+            // FIXED: Ensure scroll is active when the letter opens
+            document.body.style.overflow = 'auto';
+            document.body.style.overflowX = 'hidden';
+
+            setInterval(createHeart, 600);
+            createSparkles(); 
+            window.scrollTo(0, 0);
+        }
+
+        function showSection(sectionId, btn) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active-section'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active-section');
+            btn.classList.add('active');
+        }
+    </script>
+</body>
+</html>
